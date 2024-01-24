@@ -1,11 +1,20 @@
 import { Sequelize, DataTypes, Model } from 'sequelize'
+import bcrypt from 'bcrypt'
 
 const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: '../data/database.sqlite'
+  storage: './database.sqlite'
 })
 
-class User extends Model {}
+class User extends Model {
+  username!: string
+  email!: string
+  password!: string
+
+  public async comparePassword(candidatePassword: string): Promise<boolean> {
+    return bcrypt.compare(candidatePassword, this.getDataValue('password'))
+  }
+}
 
 User.init(
   {
@@ -24,7 +33,15 @@ User.init(
   },
   {
     sequelize,
-    modelName: 'User'
+    modelName: 'User',
+    hooks: {
+      beforeCreate: async (user: User) => {
+        // Antes de criar o usuário, criptografa a senha
+        const saltRounds = 10
+        const hashedPassword = await bcrypt.hash(user.password, saltRounds)
+        user.password = hashedPassword
+      }
+    }
   }
 )
 
@@ -40,7 +57,7 @@ export async function createUser(userData: {
     return newUser
   } catch (error) {
     console.error('Error creating user:', error)
-    throw error // Rejeita a promise para que o erro possa ser tratado por quem chama a função
+    throw error
   }
 }
 

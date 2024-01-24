@@ -64,6 +64,67 @@ app.post('/users', async (req: Request, res: Response) => {
   }
 })
 
+app.put('/users/:id', async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.id
+    const { username, email, password } = req.body
+
+    // Validação básica dos dados
+    if (!username && !email && !password) {
+      return res
+        .status(400)
+        .json({ error: 'Nenhum dado de atualização fornecido' })
+    }
+
+    const Users = await Database()
+
+    // Buscar usuário pelo ID
+    const userToUpdate = await Users.findByPk(userId)
+
+    // Verificar se o usuário existe
+    if (!userToUpdate) {
+      return res.status(404).json({ error: 'Usuário não encontrado' })
+    }
+
+    // Atualizar os dados do usuário com os novos valores fornecidos
+    await userToUpdate.update({
+      username: username || userToUpdate.username,
+      email: email || userToUpdate.email,
+      password: password || userToUpdate.password
+    })
+
+    // Responda com os detalhes do usuário atualizado
+    res.status(200).json(userToUpdate.toJSON())
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Erro ao atualizar usuário' })
+  }
+})
+
+app.delete('/users/:id', async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.id
+
+    const Users = await Database()
+
+    // Buscar usuário pelo ID
+    const userToDelete = await Users.findByPk(userId)
+
+    // Verificar se o usuário existe
+    if (!userToDelete) {
+      return res.status(404).json({ error: 'Usuário não encontrado' })
+    }
+
+    // Excluir o usuário
+    await userToDelete.destroy()
+
+    res.status(204).send() // Responder com status 204 (No Content) indicando sucesso na exclusão
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Erro ao excluir usuário' })
+  }
+})
+
 app.use(async (req: Request, res: Response, next: NextFunction) => {
   res.send('Server is running 🚀')
 })
