@@ -4,6 +4,7 @@ import cors from 'cors'
 import morgan from 'morgan'
 import helmet from 'helmet'
 import { testConnection, Database, createUser } from './models/usuario'
+import { DiarioDatabase, createDiario } from './models/registro'
 
 const app = express()
 
@@ -122,6 +123,30 @@ app.delete('/users/:id', async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Erro ao excluir usuário' })
+  }
+})
+
+app.post('/diario', async (req: Request, res: Response) => {
+  try {
+    const diarioData = req.body
+
+    // Validação básica dos dados
+    if (!diarioData.diasDaSemana || !diarioData.data || !diarioData.treino) {
+      return res
+        .status(400)
+        .json({ error: 'Dias da semana, data e treino são obrigatórios' })
+    }
+
+    const Diario = await DiarioDatabase()
+
+    // Crie uma nova entrada no diário
+    const newDiarioEntry = await createDiario(diarioData)
+
+    // Responda com os detalhes da nova entrada
+    res.status(201).json(newDiarioEntry)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Erro ao criar entrada no diário' })
   }
 })
 
