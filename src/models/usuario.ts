@@ -14,6 +14,10 @@ class User extends Model {
   public async comparePassword(candidatePassword: string): Promise<boolean> {
     return bcrypt.compare(candidatePassword, this.getDataValue('password'))
   }
+
+  static associate(models: any) {
+    User.hasMany(models.Diario, { foreignKey: 'idUsuario' })
+  }
 }
 
 User.init(

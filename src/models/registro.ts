@@ -17,6 +17,10 @@ class Diario extends Model {
   foto!: string
   lendo!: string
   textArea!: string
+
+  static associate(models: any) {
+    Diario.belongsTo(models.User, { foreignKey: 'idUsuario' })
+  }
 }
 
 Diario.init(
