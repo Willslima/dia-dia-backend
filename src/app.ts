@@ -3,7 +3,12 @@ import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
 import helmet from 'helmet'
-import { testConnection, Database, createUser } from './models/usuario'
+import {
+  testConnection,
+  Database,
+  createUser,
+  hashPassword
+} from './models/usuario'
 import { DiarioDatabase, createDiario } from './models/registro'
 
 const app = express()
@@ -87,12 +92,21 @@ app.put('/users/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Usuário não encontrado' })
     }
 
-    // Atualizar os dados do usuário com os novos valores fornecidos
-    await userToUpdate.update({
-      username: username || userToUpdate.username,
-      email: email || userToUpdate.email,
-      password: password || userToUpdate.password
-    })
+    // Se uma nova senha foi fornecida, codificar a senha antes de atualizar
+    if (password) {
+      const hashedPassword = await hashPassword(password)
+      await userToUpdate.update({
+        username: username || userToUpdate.username,
+        email: email || userToUpdate.email,
+        password: hashedPassword
+      })
+    } else {
+      // Se nenhuma nova senha foi fornecida, atualizar sem alterar a senha
+      await userToUpdate.update({
+        username: username || userToUpdate.username,
+        email: email || userToUpdate.email
+      })
+    }
 
     // Responda com os detalhes do usuário atualizado
     res.status(200).json(userToUpdate.toJSON())
